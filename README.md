@@ -63,4 +63,4 @@ This project is not, by any means, complete. This app was meant as a basic follo
 ## License
 
 This project is licensed under the Apache-2.0.
-See the [LICENSE.md](LICENSE.md) file for details.
+See the [LICENSE.md](LICENSE) file for details.

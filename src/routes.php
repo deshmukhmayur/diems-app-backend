@@ -12,7 +12,7 @@ $app->get('/notices', function($request, $response, $args) {
     header("Content-Type: application/json");
     
     // Fetch all books
-    $notices = \NoticeDetail::all();
+    $notices = \NoticeDetail::orderBy('created_at', 'desc')->get();
     $response->getBody()->write($notices->toJson());
     return $response;
 });
@@ -21,12 +21,18 @@ $app->post('/notice', function($request, $response, $args) {
 
     // header("Content-Type: application/json");
     
+    // getting the user from the access_token
     $access_token = $request->getQueryParams('access_token')['access_token'];
     $user = \AccessToken::where('token', $access_token)->get()[0];
+
     if ($user) {
         // getting the request body
         $json = $request->getBody();
         $data = json_decode($json, true);
+
+        // fetching the u_id of the current user
+        $u_id = \AdminUser::where('username', $user['username'])->first()['u_id'];
+        // echo $u_id;
 
         // error_log(print_r("Response: \n" . $data), 4);
         // echo $json . '<br><br>';
@@ -44,7 +50,8 @@ $app->post('/notice', function($request, $response, $args) {
             $img_url = $request->getUri()->getBaseUrl().'/uploads/'.$filename;
         }
 
-        error_log(print_r("Uploaded img_url: ".$img_url));
+        // error_log(print_r("Uploaded img_url: ".$img_url));
+        // echo '<br>img_url: '.$img_url;
 
         // Creating a new notice
         $notice = new \NoticeDetail(array(
@@ -56,7 +63,7 @@ $app->post('/notice', function($request, $response, $args) {
             'class' => strtolower($data['class']),
             'division' => $data['division'],
             'audience' => strtolower($data['u_type']),
-            'u_id' => $user['id']
+            'u_id' => $u_id,
         ));
         $notice->save();
         $response->getBody()->write($notice->toJson());
@@ -120,6 +127,53 @@ $app->post('/login', function($request, $response, $args) {
         $response->getBody()->write("{\"access_token\":\"" . $token['token'] . "\", \"status\": 202}");
     } else {
         $response->getBody()->write('{"status": 401, "error": "Incorrect Username/Password"}');
+    }
+
+    return $response;
+});
+
+$app->put('/changepass', function($request, $response) {
+    header("Content-Type: application/json");
+
+    // getting the user from the access_token
+    $access_token = $request->getQueryParams('access_token')['access_token'];
+    $token = \AccessToken::where('token', $access_token)->first();
+
+    // echo $token;
+
+    // if the token exists
+    if ($token) {
+        $user = \AdminUser::where('username', $token['username'])->first();
+
+        // echo $user;
+
+        // fetching POST parameters
+        $params = $request->getBody();
+        $data = json_decode($params, true);
+
+        $old_pass = $data['old_pass'];
+        $new_pass = $data['new_pass'];
+
+        // echo $old_pass .'<br>'. $new_pass;
+
+        if (hash('sha256', $old_pass) == $user['password']) {
+            // updating the password and token
+            $user->update([
+                'password' => hash('sha256', $new_pass)
+                ]);
+            $token->update([
+                'token' => md5($user['username'] . $new_pass)
+                ]);
+
+            $user->save();
+            $token->save();
+
+            $response->getBody()->write("{\"status\": 202, \"message\": \"Password successfully changed\", \"access_token\": \"" . $token['token'] . "\"}");
+        } else {
+            $response->getBody()->write('{"status": 401, "error": "Incorrect Password"}');
+        }
+    } else {
+        $response->getBody()->write('{"status": 401, "error": "Unauthorized Access"}');
     }
 
     return $response;

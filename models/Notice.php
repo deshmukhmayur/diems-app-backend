@@ -8,8 +8,11 @@ class NoticeDetail extends \Illuminate\Database\Eloquent\Model {
         'end_date',
         'branch',
         'class',
-        'divsion',
-        'user_type'
+        'division',
+        'audience',
+        'u_id',
+        'created_at',
+        'updated_at',
     ];
 }
 

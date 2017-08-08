@@ -4,12 +4,13 @@
 
 ### POST [/register](#)
 
--[ ] Add validations and exception handling
+- [ ] Add validations and exception handling
 
 ### POST [/login](#)
 
--[ ] Add a check for user type
+- [ ] Add a check for user type
 
 ### POST [/notice](#)
 
--[x] Save the recieved file in /uploads directory
+- [x] Save the recieved file in /uploads directory
+- [ ] Provide Authorization for user_type

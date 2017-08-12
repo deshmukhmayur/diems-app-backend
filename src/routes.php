@@ -11,18 +11,18 @@ $app->get('/notices', function($request, $response, $args) {
     
     header("Content-Type: application/json");
     
-    // Fetch all books
+    // Fetch all notices
     $notices = \NoticeDetail::orderBy('created_at', 'desc')->get();
     $response->getBody()->write($notices->toJson());
     return $response;
 });
 
-$app->post('/notice', function($request, $response, $args) {
+$app->post('/notices', function($request, $response, $args) {
 
     // header("Content-Type: application/json");
     
     // getting the user from the access_token
-    $access_token = $request->getQueryParams('access_token')['access_token'];
+    $access_token = $request->getQueryParams()['access_token'];
     $user = \AccessToken::where('token', $access_token)->get()[0];
 
     if ($user) {
@@ -31,7 +31,7 @@ $app->post('/notice', function($request, $response, $args) {
         $data = json_decode($json, true);
 
         // fetching the u_id of the current user
-        $u_id = \AdminUser::where('username', $user['username'])->first()['u_id'];
+        $u_id = \AdminUser::where('username', $user['username'])->first()['id'];
         // echo $u_id;
 
         // error_log(print_r("Response: \n" . $data), 4);
@@ -72,6 +72,57 @@ $app->post('/notice', function($request, $response, $args) {
     }
 
     return $response;
+});
+
+$app->delete('/notices/{n_id}', function($request, $response, $args) {
+    // header("Content-Type: application/json");
+
+    $access_token = $request->getQueryParams()['access_token'];
+    // echo $access_token;
+    $user = \AccessToken::where('token', $access_token)->first();
+    echo $user;
+
+    if ($user) {
+        $n_id = $request->getAttribute('n_id');
+        $notice = \NoticeDetail::find($n_id);
+        // echo $notice->toJson();
+        $u_id = \AdminUser::where('username', $user['username'])->first()['id'];
+        if ($notice['u_id'] == $u_id) {
+            $img = pathinfo($notice['img_url'], PATHINFO_BASENAME);
+            $notice->delete();
+
+            // delete the image
+            unlink("uploads/$img");
+
+            $response->getBody()->write('{"status": 200, "message": "Notice Deleted"}');
+            return $response;
+        }
+    }
+    $response->getBody()->write('{"status": 401, "error": "User Unauthorized"}');
+    return $response;
+});
+
+$app->get('/self/notices', function($request, $response, $args) {
+    header("Content-Type: application/json");
+    
+    $access_token = $request->getQueryParams()['access_token'];
+    // echo $access_token;
+    $user = \AccessToken::where('token', $access_token)->first();
+
+    if ($user) {
+        // fetching the u_id of the current user
+        $u_id = \AdminUser::where('username', $user['username'])->first()['id'];
+
+        // Fetch all notices
+        $notices = \NoticeDetail::where('u_id', $u_id)
+                                ->orderBy('created_at', 'asc')
+                                ->get();
+        $response->getBody()->write($notices->toJson());
+        return $response;
+    } else {
+        $response->getBody()->write('{"status": 401, "error": "Unauthorized Access"}');
+        return $response;
+    }
 });
 
 $app->post('/register', function($request, $response, $args) {
@@ -136,7 +187,7 @@ $app->put('/changepass', function($request, $response) {
     header("Content-Type: application/json");
 
     // getting the user from the access_token
-    $access_token = $request->getQueryParams('access_token')['access_token'];
+    $access_token = $request->getQueryParams()['access_token'];
     $token = \AccessToken::where('token', $access_token)->first();
 
     // echo $token;

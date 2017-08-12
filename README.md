@@ -21,9 +21,14 @@ The following components should be pre-installed:
 
 ### Configuration
 
-Clone this Repository
+Clone this Repository:
 ```bash
 $ git clone https://github.com/deshmukhmayur/diems-app-backend.git
+```
+
+Install the dependencies:
+```bash
+$ php composer.phar install
 ```
 
 After cloning the repository, you need to add a `settings.php` file in the `src/` folder
@@ -39,8 +44,6 @@ $settings = array(
     'prefix' => '',
 );
 ```
-
-**Note:** Make sure to set the `public/` directory as the root in .htaccess for apache.
 
 ## Built with:
 

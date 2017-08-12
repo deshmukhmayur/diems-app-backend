@@ -80,7 +80,7 @@ $app->delete('/notices/{n_id}', function($request, $response, $args) {
     $access_token = $request->getQueryParams()['access_token'];
     // echo $access_token;
     $user = \AccessToken::where('token', $access_token)->first();
-    echo $user;
+    // echo $user;
 
     if ($user) {
         $n_id = $request->getAttribute('n_id');
@@ -90,7 +90,6 @@ $app->delete('/notices/{n_id}', function($request, $response, $args) {
         if ($notice['u_id'] == $u_id) {
             $img = pathinfo($notice['img_url'], PATHINFO_BASENAME);
             $notice->delete();
-
             // delete the image
             unlink("uploads/$img");
 
@@ -128,34 +127,43 @@ $app->get('/self/notices', function($request, $response, $args) {
 $app->post('/register', function($request, $response, $args) {
     // header("Content-Type: application/json");
 
-    // fetching POST parameters
-    $params = $request->getBody();
-    $data = json_decode($params, true);
-    
-    $username = $data['username'];
-    $password = $data['password'];
-    $u_type = $data['u_type'];
-    
-    try {
-        // Creating a new Admin
-        $admin = new \AdminUser(array(
-            'username' => $username,
-            'password' => hash('sha256', $password),
-            'u_type' => $u_type
-        ));
-        // Creating an access token
-        $token = new \AccessToken(array(
-            'token' => md5($username . $password),
-            'username' => $username,
-            'u_type' => $u_type
-        ));
-        $admin->save();
-        $token->save();
-        $response->getBody()->write("{status: 201, message: \"User Created\"}");
-    } catch (PDOException $e) {
-        $response->getBody()->write("{status: 500, message: \"Username Already Exists.\"}");
-    }
+    $token = $request->getQueryParams()['access_token'];
+    $user = \AccessToken::where('token', $access_token)->first();
 
+    if ($user) {
+        $u_type = \AdminUser::where('username', $user['username'])->first()['u_type'];
+
+        if ($u_type == 'admin') {
+            // fetching POST parameters
+            $params = $request->getBody();
+            $data = json_decode($params, true);
+            
+            $username = $data['username'];
+            $password = $data['password'];
+            $u_type = $data['u_type'];
+            
+            try {
+                // Creating a new Admin
+                $admin = new \AdminUser(array(
+                    'username' => $username,
+                    'password' => hash('sha256', $password),
+                    'u_type' => $u_type
+                ));
+                // Creating an access token
+                $token = new \AccessToken(array(
+                    'token' => md5($username . $password),
+                    'username' => $username,
+                    'u_type' => $u_type
+                ));
+                $admin->save();
+                $token->save();
+                $response->getBody()->write('{"status": 201, "message": "User Created"}');
+            } catch (PDOException $e) {
+                $response->getBody()->write('{"status": 500, "message": "Username Already Exists"}');
+            }
+        }
+    }
+    $response->getBody()->write('{"status": 500, "error": "Unauthorized"}');
     return $response;
 });
 

@@ -87,14 +87,19 @@ $app->delete('/notices/{n_id}', function($request, $response, $args) {
         $notice = \NoticeDetail::find($n_id);
         // echo $notice->toJson();
         $u_id = \AdminUser::where('username', $user['username'])->first()['id'];
-        if ($notice['u_id'] == $u_id) {
-            $img = pathinfo($notice['img_url'], PATHINFO_BASENAME);
-            $notice->delete();
-            // delete the image
-            unlink("uploads/$img");
-
-            $response->getBody()->write('{"status": 200, "message": "Notice Deleted"}');
+        if (!$notice) {
+            $response->getBody()->write('{"status": 404, "error": "Notice not found"}');
             return $response;
+        } else {
+            if ($notice['u_id'] == $u_id) {
+                $img = pathinfo($notice['img_url'], PATHINFO_BASENAME);
+                $notice->delete();
+                // delete the image
+                unlink("uploads/$img");
+
+                $response->getBody()->write('{"status": 200, "message": "Notice Deleted"}');
+                return $response;
+            }
         }
     }
     $response->getBody()->write('{"status": 401, "error": "User Unauthorized"}');
@@ -114,6 +119,7 @@ $app->get('/self/notices', function($request, $response, $args) {
 
         // Fetch all notices
         $notices = \NoticeDetail::where('u_id', $u_id)
+                                // ->orderBy('end_date', 'asc')
                                 ->orderBy('created_at', 'asc')
                                 ->get();
         $response->getBody()->write($notices->toJson());

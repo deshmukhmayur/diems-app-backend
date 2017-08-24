@@ -10,7 +10,7 @@ require '../src/dependencies.php';
 $app = new \Slim\App;
 
 // Routes
-require '../src/routes.php';
+require '../src/routes/index.php';
 
 $app->run();
 

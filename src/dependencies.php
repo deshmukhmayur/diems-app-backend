@@ -1,6 +1,6 @@
 <?php
 
-// Import the database information from /src/settings.php
+// Import the database information from config/settings.php
 // e.g.
 // $settings = array(
 //     'driver' => 'mysql',

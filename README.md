@@ -31,9 +31,10 @@ Install the dependencies:
 $ php composer.phar install
 ```
 
-After cloning the repository, you need to add a `settings.php` file in the `src/` folder
-containing your database details. For eg.
+After cloning the repository, you need to create a new directory `config/` in the root and add a `settings.php` file in it containing your database and credentials. For eg.
 ```php
+// config/settings.php
+
 $settings = array(
     'driver' => 'mysql',
     'host' => 'localhost',

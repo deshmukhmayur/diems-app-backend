@@ -1,27 +1,25 @@
 <?php
 
+// GET all the notices
 $app->get('/notices', function($request, $response, $args) {
-    // header("Content-Type: application/json");
-    
     // Fetch all notices
     $notices = \NoticeDetail::orderBy('created_at', 'desc')->get();
     return $response->withJson($notices);
 });
 
+// POST a new notive
 $app->post('/notices', function($request, $response, $args) {
-    // header("Content-Type: application/json");
-    
     // getting the user from the access_token
     $access_token = $request->getQueryParams()['access_token'];
-    $user = \AccessToken::where('token', $access_token)->get()[0];
+    $token = \AccessToken::where('token', $access_token)->get()[0];
 
-    if ($user) {
+    if ($token) {
         // getting the request body
         $json = $request->getBody();
         $data = json_decode($json, true);
 
         // fetching the u_id of the current user
-        $u_id = \AdminUser::where('username', $user['username'])->first()['id'];
+        $user = \AdminUser::where('username', $user['username'])->first();
         // echo $u_id;
 
         // error_log(print_r("Response: \n" . $data), 4);
@@ -53,35 +51,34 @@ $app->post('/notices', function($request, $response, $args) {
             'class' => strtolower($data['class']),
             'division' => $data['division'],
             'audience' => strtolower($data['u_type']),
-            'u_id' => $u_id,
+            'u_id' => strtolower($user['u_id']),
         ));
         $notice->save();
         return $response->withJson($notice);
     } else {
-        $response->getBody()->write('{"status": 401, "error":"Unauthorized Access"}');
         return $response->withJson(array('status'=>401,
                                         'error'=>'Unauthorized Access'));
     }
 });
 
+// DELETE a notice
 $app->delete('/notices/{n_id}', function($request, $response, $args) {
-    // header("Content-Type: application/json");
 
     $access_token = $request->getQueryParams()['access_token'];
     // echo $access_token;
-    $user = \AccessToken::where('token', $access_token)->first();
-    // echo $user;
+    $token = \AccessToken::where('token', $access_token)->first();
+    // echo $token;
 
-    if ($user) {
+    if ($token) {
         $n_id = $request->getAttribute('n_id');
         $notice = \NoticeDetail::find($n_id);
         // echo $notice->toJson();
-        $u_id = \AdminUser::where('username', $user['username'])->first()['id'];
+        $user = \AdminUser::where('username', $token['username'])->first();
         if (!$notice) {
             return $response->withJson(array('status'=>400,
                                             'error'=>'Notice not found'));
         } else {
-            if ($notice['u_id'] == $u_id) {
+            if ($notice['u_id'] == $user['u_id']) {
                 $img = pathinfo($notice['img_url'], PATHINFO_BASENAME);
                 $notice->delete();
                 // delete the image
@@ -96,19 +93,19 @@ $app->delete('/notices/{n_id}', function($request, $response, $args) {
                                     'error'=>'User not authorized'));
 });
 
+// GET the notices of the user
 $app->get('/self/notices', function($request, $response, $args) {
-    // header("Content-Type: application/json");
-    
+
     $access_token = $request->getQueryParams()['access_token'];
     // echo $access_token;
-    $user = \AccessToken::where('token', $access_token)->first();
+    $token = \AccessToken::where('token', $access_token)->first();
 
-    if ($user) {
+    if ($token) {
         // fetching the u_id of the current user
-        $u_id = \AdminUser::where('username', $user['username'])->first()['id'];
+        $user = \AdminUser::where('username', $token['username'])->first();
 
         // Fetch all notices
-        $notices = \NoticeDetail::where('u_id', $u_id)
+        $notices = \NoticeDetail::where('u_id', $user['u_id'])
                                 // ->orderBy('end_date', 'asc')
                                 ->orderBy('created_at', 'asc')
                                 ->get();

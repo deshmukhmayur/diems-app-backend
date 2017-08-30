@@ -4,15 +4,47 @@
 
 // Include the Notice model
 require '../models/Notice.php';
-// Include the admin module
+// Include the admin model
 require '../models/Admin.php';
-// Include the access token module
+// Include the Access Token model
 require '../models/AccessToken.php';
+// Include the Staff Detail model
+require '../models/Staff.php';
+// Include the Student Detail model
+require '../models/Student.php';
+// Include Class Test model
+require '../models/ClassTest.php';
+// Include the Subject Detail model
+require '../models/Subject.php';
+// Include the Department model
+require '../models/DepartmentDetail.php';
+// Include Class Mapping model
+require '../models/ClassMapping.php';
+// Include Class Teacher Mapping model
+require '../models/ClassTeacherMapping.php';
+// Include Mentor Batch Mapping model
+require '../models/MentorBatchMapping.php';
+// Include Subject Teacher Mapping model
+require '../models/SubjectTeacherMapping.php';
 
+// API v0.2 (support for older versions of the app)
+$app->group('', function() {
+    // routes for NOTICES
+    require '../src/routes/notices.php';
+    
+    $this->any('/{route:login|register|changepass}', function($request, $response, $args) {
+        return $response->withStatus(426)->withJson(array('status'=>426,
+        'error'=>'Please update the app to the latest version'));
+    });
+});
 
-// routes for AUTHENTICATION
-require '../src/routes/auth.php';
-// routes for NOTICES
-require '../src/routes/notices.php';
+$app->group('/api', function() {
+    // routes for AUTHENTICATION module
+    require '../src/routes/auth.php';
+    // routes for NOTICES module
+    require '../src/routes/notices.php';
+    // routes for CLASS TEST module
+    require '../src/routes/class_test.php';
+});
 
 ?>

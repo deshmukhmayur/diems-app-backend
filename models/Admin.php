@@ -3,7 +3,7 @@
 class AdminUser extends \Illuminate\Database\Eloquent\Model {
     protected $fillable = [
         'id',
-        'username',
+        'email',
         'password',
         'u_type'
     ];

@@ -1,11 +1,23 @@
-<?php
+<?php 
 
+// Middleware for deleting expired notices
+$this->add(function($req, $res, $next) {
+    /* not very efficient, but it works.
+    */
+    $expired = \NoticeDetail::where('end_date', '<', date('Y-m-d H:i:s'));
+    $expired->update([
+        'expired' => true
+    ]);
+    $expired->delete();
+    $response = $next($req, $res);
+    return $response;
+});
 
 $this->group('/notices', function() {
     // GET all the notices
     $this->get('', function($request, $response, $args) {
         // Fetch all notices
-        $notices = \NoticeDetail::orderBy('created_at', 'desc')->get();
+        $notices = \NoticeDetail::latest()->get();
         return $response->withJson($notices);
     });
     
@@ -14,9 +26,8 @@ $this->group('/notices', function() {
         // getting the user from the access_token
         $access_token = $request->getQueryParams()['access_token'];
         $token = \AccessToken::where('token', $access_token)->first();
-        // return $response->withJson(array($token, $access_token));
     
-        if (!$token || $token['u_type'] != 'admin') {
+        if (!$token && $token['u_type'] != 'admin') {
             return $response->withJson(array('status'=>401,
                                             'error'=>'Unauthorized Access'));
         } else {
@@ -25,7 +36,7 @@ $this->group('/notices', function() {
             $data = json_decode($json, true);
     
             // fetching the u_id of the current user
-            $user = \AdminUser::find($token['u_id']);
+            $user = \NoticeAdminUser::find($token['u_id']);
     
             // error_log(print_r("Response: \n" . $data['end_date']), 4);
             // echo $json . '<br><br>';
@@ -70,7 +81,7 @@ $this->group('/notices', function() {
         // echo $token;
     
         if ($token && $token['u_type'] == 'admin') {
-            $user = \AdminUser::find($token['u_id']);
+            $user = \NoticeAdminUser::find($token['u_id']);
             $notice = \NoticeDetail::find($args['n_id']);
     
             if (!$notice) {
@@ -100,9 +111,9 @@ $this->group('/notices', function() {
         // echo $access_token;
         $token = \AccessToken::where('token', $access_token)->first();
     
-        if ($token || $token['u_type'] == 'admin') {
+        if ($token && $token['u_type'] == 'admin') {
             // fetching the u_id of the current user
-            $user = \AdminUser::find($token['u_id']);
+            $user = \NoticeAdminUser::find($token['u_id']);
     
             // Fetch all notices
             $notices = \NoticeDetail::where('u_id', $user['id'])
@@ -114,6 +125,28 @@ $this->group('/notices', function() {
             return $response->withJson(array('status'=>401,
                                             'error'=>'Unauthorized Access'));
         }
+    });
+
+    // GET the trashed notices
+    $this->get('/self/trashed', function($request, $response) {
+        $access_token = $request->getQueryParams()['access_token'];
+        $token = \AccessToken::where('token', $access_token)->first();
+
+        if ($token && $token['u_type'] == 'admin') {
+            $user = \NoticeAdminUser::find($token->u_id);
+
+            // fetch the notices trashed by the $user
+            $notice = \NoticeDetail::onlyTrashed()
+                                    ->orderBy('end_date', 'desc')
+                                    ->get();
+
+            return $response->withJson($notice);
+        }
+
+        return $response->withJson(array(
+            'status' => 401,
+            'error' => 'Unauthorized'
+        ));
     });
 });
 

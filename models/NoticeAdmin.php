@@ -1,6 +1,6 @@
 <?php
 
-class AdminUser extends \Illuminate\Database\Eloquent\Model {
+class NoticeAdminUser extends \Illuminate\Database\Eloquent\Model {
     protected $fillable = [
         'id',
         'email',

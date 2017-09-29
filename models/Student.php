@@ -23,6 +23,10 @@ class StudentDetail extends \Illuminate\Database\Eloquent\Model {
         return $this->marks()->where('student_detail_id', $this['id'])->avg('obt_marks');
     }
 
+    public function getSubAvg($sub_id) {
+        return $this->marks()->where('subject_detail_id', $sub_id)->avg('obt_marks');
+    }
+
     public function class() {
         return $this->belongsTo('\ClassMapping', 'class_mapping_id');
     }

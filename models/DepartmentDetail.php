@@ -15,6 +15,10 @@ class DepartmentDetail extends \Illuminate\Database\Eloquent\Model {
     public function students() {
         return $this->hasManyThrough('\ClassMapping', '\StudentDetail');
     }
+
+    public function staff() {
+        return $this->hasMany('\StaffDetail');
+    }
 }
 
 ?>

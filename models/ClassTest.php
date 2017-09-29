@@ -10,10 +10,11 @@ class ClassTestDetail extends \Illuminate\Database\Eloquent\Model {
         'ct_no',
         'created_at',
         'updated_at',
+        'expired'
     ];
 
     public function subject() {
-        return $this->hasMany('\SubjectDetail');
+        return $this->belongsTo('\SubjectDetail', 'subject_detail_id');
     }
 
     public function student() {

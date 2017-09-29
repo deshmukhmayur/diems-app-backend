@@ -11,6 +11,14 @@ class SubjectDetail extends \Illuminate\Database\Eloquent\Model {
     public function getClassTest() {
         return $this->hasMany('\ClassTestDetail');
     }
+
+    public function marks() {
+        return $this->hasMany('\ClassTestDetail');
+    }
+
+    public function subTeacherMapping() {
+        return $this->hasMany('\SubjectTeacherMapping');
+    }
 }
 
 ?>

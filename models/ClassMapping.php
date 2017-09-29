@@ -2,7 +2,7 @@
 
 class ClassMapping extends \Illuminate\Database\Eloquent\Model {
     protected $fillable = [
-        'department_detail_ids',
+        'department_detail_id',
         'class',
         'division'
     ];
@@ -16,6 +16,10 @@ class ClassMapping extends \Illuminate\Database\Eloquent\Model {
     public function dept() {
         return $this->belongsTo('\DepartmentDetail', 'department_detail_id');
     }
+
+    // public function staffMapping() {
+    //     return $this->belongsTo('\ClassTeacherMapping');
+    // }
 }
 
 ?>

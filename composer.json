@@ -1,6 +1,7 @@
 {
     "require": {
         "slim/slim": "*",
-        "illuminate/database": "*"
+        "illuminate/database": "*",
+        "phpoffice/phpexcel": "^1.8"
     }
 }

@@ -10,7 +10,15 @@ class StaffDetail extends \Illuminate\Database\Eloquent\Model {
     ];
 
     public function dept() {
-        return $this->belongsTo('\DepartmentDetail');
+        return $this->belongsTo('\DepartmentDetail', 'department_detail_id');
+    }
+
+    public function class() {
+        return $this->hasOne('\ClassTeacherMapping');
+    }
+
+    public function mentees() {
+        return $this->hasOne('\MentorBatchMapping');
     }
 }
 

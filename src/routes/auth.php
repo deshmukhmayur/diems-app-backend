@@ -5,7 +5,7 @@ $this->post('/register', function($request, $response, $args) {
     $token = \AccessToken::where('token', $access_token)->first();
 
     if ($token) {
-        $user = \AdminUser::find($token['u_id']);
+        $user = \NoticeAdminUser::find($token['u_id']);
         // return $response->withJson($user);
 
         if ($user['u_type'] == 'admin') {
@@ -18,21 +18,22 @@ $this->post('/register', function($request, $response, $args) {
             try {
                 if ($user_type == 'admin') {
                     // Creating a new Admin
-                    $new_user = new \AdminUser(array(
+                    $new_user = new \NoticeAdminUser(array(
                         'email' => $data['email'],
                         'password' => hash('sha256', $data['password']),
                         'u_type' => $data['u_type']
                     ));
+                    $new_user->save();
                 } else if ($user_type == 'staff') {
                     $dept = \DepartmentDetail::where('name', $data['dept'])->first();
                     // Creating a new Staff user
                     $new_user = new \StaffDetail(array(
                         'name' => $data['name'],
-                        'deptartment_detail_id' => $dept['id'],
                         'mob_no' => $data['mob_no'],
                         'email' => $data['email'],
                         'password' => hash('sha256', $data['password']),
                     ));
+                    $dept->staff()->save($new_user);
                 } else if ($user_type == 'student') {
                     // fetch the class id for given branch, class, division
                     $dept = \DepartmentDetail::where('name', $data['branch'])->first();
@@ -47,31 +48,17 @@ $this->post('/register', function($request, $response, $args) {
                         'name' => $data['name'],
                         'prn_no' => $data['prn_no'],
                         'roll_no' => $data['roll_no'],
-                        'class_mapping_id' => $class['id'],
                         'mentor_batch_mapping_id' => $batch['id'],
                         'dob' => $data['dob'],
                         'mob_no' => $data['mob_no'],
                         'email' => $data['email'],
                         'password' => hash('sha256', $data['password'])
                     ));
-
-                    // return $response->withJson(array(
-                    //     'name' => $data['name'],
-                    //     'prn_no' => $data['prn_no'],
-                    //     'roll_no' => $data['roll_no'],
-                    //     'class_mapping_id' => $class['id'],
-                    //     'mentor_batch_mapping_id' => $batch['id'],
-                    //     'dob' => $data['dob'],
-                    //     'mob_no' => $data['mob_no'],
-                    //     'email' => $data['email'],
-                    //     'password' => hash('sha256', $data['password'])
-                    // ));
-                    // return $response->withJson(array($dept, $class, $batch));
+                    $class->students()->save($new_user);
                 } else {
                     return $response->withJson(array('status'=>400,
                                                     'error'=>'Invalid User Type selected'));
                 }
-                $new_user->save();
                 // Creating an access token
                 $token = new \AccessToken(array(
                     'token' => md5($data['username'] . $data['password']),
@@ -83,8 +70,7 @@ $this->post('/register', function($request, $response, $args) {
                                                 'message'=>'User Created'));
             } catch (PDOException $e) {
                 return $response->withJson(array('status'=>406,
-                                                'message'=>'Username Already Exists',
-                                                'error'=>$e));
+                                                'error'=>'Username Already Exists'));
             }
         }
     } else {
@@ -103,7 +89,7 @@ $this->post('/login', function($request, $response, $args) {
     $u_type = $data['u_type'];
 
     if ($u_type == 'admin') {
-        $user = \AdminUser::where('email', $username)->first();
+        $user = \NoticeAdminUser::where('email', $username)->first();
     } else if ($u_type == 'staff') {
         $user = \StaffDetail::where('email', $username)->first();
     } else if ($u_type == 'student') {
@@ -137,7 +123,7 @@ $this->put('/changepass', function($request, $response) {
     // if the token exists
     if ($token) {
         if ($token['u_type'] == 'admin') {
-            $user = \AdminUser::find($token['u_id']);
+            $user = \NoticeAdminUser::find($token['u_id']);
         } else if ($token['u_type'] == 'staff') {
             $user = \StaffDetail::find($token['u_id']);
         } else if ($token['u_type'] == 'student') {
@@ -172,11 +158,11 @@ $this->put('/changepass', function($request, $response) {
                                             'access_token' => $token['token']));
         } else {
             return $response->withJson(array('status'=>412,
-                                            'message'=>'Incorrect Password'));
+                                            'error'=>'Incorrect Password'));
         }
     } else {
         return $response->withJson(array('status'=>401,
-                                        'message'=>'Unauthorized Access'));
+                                        'error'=>'Unauthorized Access'));
     }
 });
 

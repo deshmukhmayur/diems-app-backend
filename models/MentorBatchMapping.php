@@ -8,6 +8,10 @@ class MentorBatchMapping extends \Illuminate\Database\Eloquent\Model {
     ];
 
     public $timestamps = false;
+
+    public function students() {
+        return $this->hasMany('\StudentDetail');
+    }
 }
 
 ?>

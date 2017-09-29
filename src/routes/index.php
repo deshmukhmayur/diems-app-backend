@@ -5,7 +5,7 @@
 // Include the Notice model
 require '../models/Notice.php';
 // Include the admin model
-require '../models/Admin.php';
+require '../models/NoticeAdmin.php';
 // Include the Access Token model
 require '../models/AccessToken.php';
 // Include the Staff Detail model
@@ -26,6 +26,19 @@ require '../models/ClassTeacherMapping.php';
 require '../models/MentorBatchMapping.php';
 // Include Subject Teacher Mapping model
 require '../models/SubjectTeacherMapping.php';
+
+// setting up CORS
+$app->options('/{routes:.+}', function ($request, $response, $args) {
+    return $response;
+});
+$app->add(function ($req, $res, $next) {
+    $response = $next($req, $res);
+    return $response
+            ->withHeader('Access-Control-Allow-Origin', '*')
+            ->withHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization')
+            ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+});
+
 
 // API v0.2 (support for older versions of the app)
 $app->group('', function() {

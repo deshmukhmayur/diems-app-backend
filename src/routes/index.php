@@ -2,6 +2,8 @@
 
 // Note To Self: All the locations are relative to public/index.php
 
+// Include the Admin Users
+require '../models/AdminUser.php';
 // Include the Notice model
 require '../models/Notice.php';
 // Include the admin model

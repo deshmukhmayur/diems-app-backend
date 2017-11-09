@@ -27,10 +27,7 @@ $this->group('/notices', function() {
         $access_token = $request->getQueryParams()['access_token'];
         $token = \AccessToken::where('token', $access_token)->first();
     
-        if (!$token && $token['u_type'] != 'admin') {
-            return $response->withJson(array('status'=>401,
-                                            'error'=>'Unauthorized Access'));
-        } else {
+        if ($token && $token['u_type'] == 'notice-admin') {
             // getting the request body
             $json = $request->getBody();
             $data = json_decode($json, true);
@@ -70,6 +67,9 @@ $this->group('/notices', function() {
             ));
             $notice->save();
             return $response->withJson($notice);
+        } else {
+            return $response->withJson(array('status'=>401,
+                                            'error'=>'Unauthorized Access'));
         }
     });
     
@@ -80,7 +80,7 @@ $this->group('/notices', function() {
         $token = \AccessToken::where('token', $access_token)->first();
         // echo $token;
     
-        if ($token && $token['u_type'] == 'admin') {
+        if ($token && $token['u_type'] == 'notice-admin') {
             $user = \NoticeAdminUser::find($token['u_id']);
             $notice = \NoticeDetail::find($args['n_id']);
     
@@ -111,7 +111,7 @@ $this->group('/notices', function() {
         // echo $access_token;
         $token = \AccessToken::where('token', $access_token)->first();
     
-        if ($token && $token['u_type'] == 'admin') {
+        if ($token && $token['u_type'] == 'notice-admin') {
             // fetching the u_id of the current user
             $user = \NoticeAdminUser::find($token['u_id']);
     
@@ -132,7 +132,7 @@ $this->group('/notices', function() {
         $access_token = $request->getQueryParams()['access_token'];
         $token = \AccessToken::where('token', $access_token)->first();
 
-        if ($token && $token['u_type'] == 'admin') {
+        if ($token && $token['u_type'] == 'notice-admin') {
             $user = \NoticeAdminUser::find($token->u_id);
 
             // fetch the notices trashed by the $user

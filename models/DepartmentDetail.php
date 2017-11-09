@@ -19,6 +19,10 @@ class DepartmentDetail extends \Illuminate\Database\Eloquent\Model {
     public function staff() {
         return $this->hasMany('\StaffDetail');
     }
+
+    public function noticeAdmins() {
+        return $this->hasMany('\NoticeAdminUser');
+    }
 }
 
 ?>

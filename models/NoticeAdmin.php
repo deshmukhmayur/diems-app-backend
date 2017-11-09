@@ -5,10 +5,15 @@ class NoticeAdminUser extends \Illuminate\Database\Eloquent\Model {
         'id',
         'email',
         'password',
-        'u_type'
+        'type',
+        'department_detail_id'
     ];
 
     public $timestamps = false;
+
+    public function dept() {
+        return $this->belongsTo('\DepartmentDetail', 'department_detail_id');
+    }
 }
 
 ?>

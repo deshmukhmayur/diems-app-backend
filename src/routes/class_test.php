@@ -297,38 +297,39 @@ $this->group('/staff', function () {
 
         if ($token && $token['u_type'] == 'staff') {
             $staff = \StaffDetail::find($token->u_id);
+
+            $data = $request->getParsedBody();
         
             $uploadedFiles = $request->getUploadedFiles();
             // handle single input with single file upload
             $uploadedFile = $uploadedFiles['file'];
-            return $response->withJson($uploadedFiles);
+            // return $response->withJson($uploadedFiles);
             
             $class = \ClassTeacherMapping::where('staff_detail_id', $staff->id)->first()->class;
             
             if ($uploadedFile && $uploadedFile->getError() === UPLOAD_ERR_OK) {
                 $filename = $class->dept->name . $class->class . $class->division;
                 // error_log($filename);
-                $filepath = moveUploadedFile(ROOT . '/assets/results', $filename, $uploadedFile);
-        
-                /** TODO: Process the uploaded file
-                * get the ct_no, passing_marks, total_marks from $queryString
-                * get the class from $class
-                * verify if the roll_no are from the class?
-                * get the $stud_id from roll_no
-                * get the $subject_detail_id from subject_name
-                * insert the rows in \ClassTestDetail
-                */
+                $filepath = moveUploadedFile(ROOT . '/uploads/results', $filename, $uploadedFile);
+                
+                // $ext = pathinfo($filepath, PATHINFO_EXTENSION);
+                // error_log($ext);
+                
+                $total_marks = $data['total_marks'] ? $data['total_marks'] : 40;
+                $passing_marks = $data['passing_marks'] ? $data['passing_marks'] : 24;
+
+                $res = insertMarks($filepath, $total_marks, $passing_marks);
 
                 return $response->withJson(array(
                     'status' => 201,
-                    'message' => 'Data uploaded successfully',
-                    'body' => $request->getParsedBody()
+                    'message' => $res['inserted'] .  ' row(s) inserted successfully. ' . $res['failed'] . ' failed.',
+                    'errors' => $res['errors']
                 ));
             }
 
             return $response->withJson(array(
                 'status' => 400,
-                'error' => 'Error occured while uploading. Please try again.'
+                'error' => 'Error occured while uploading. Make sure that the proper file is selected and please try again.'
             ));
         }
         return $response->withJson(array(
@@ -513,11 +514,10 @@ $this->group('/students', function () {
 });
 
 $this->get('/test', function ($request, $response) {
-    $xls = PHPExcel_IOFactory::load(ROOT . '/assets/results/csebe1_20170926180456.xls');
+    $xls = PHPExcel_IOFactory::load(ROOT . '/uploads/results/csebe1_test.xlsx');
     $sheet = $xls->getActiveSheet();
     $maxCell = $sheet->getHighestRowAndColumn();
-    $res = $sheet->toArray(null);
-
+    $res = $sheet->rangeToArray('A1:' . $maxCell['column'] . $maxCell['row']);
     $header = $res[0];
     $header[0] = 'roll_no';
     $header = array_map(function ($item) {
@@ -527,23 +527,49 @@ $this->get('/test', function ($request, $response) {
     $marklist = array_slice($res, 1, $maxCell['row']);
 
     $r = array();
+    $records = [];
+    $el = array();
     foreach ($marklist as $row) {
         $c = array(
             'roll_no' => $row[0]
         );
         $subs = array();
-        for ($i=1; $i < count($row); $i++) {
-            // $c[$header[$i]] = $row[$i];
-            array_push($subs, array(
-                'subject_name' => $header[$i],
-                'obt_marks' => $row[$i]
-            ));
+        for ($i=1; $i < count($row) && $header[$i] != null; $i++) {
+            // array_push($subs, array(
+            //     'subject_name' => $header[$i],
+            //     'obt_marks' => $row[$i]
+            // ));
+
+            try {
+                $stud = StudentDetail::where('roll_no', $row[0])->first();
+                $sub = SubjectDetail::where('short_name', $header[$i])->first();
+                $record = [
+                    'subject_detail_id' => $sub['id'],
+                    'total_marks' => 40,
+                    'passing' => 24,
+                    'obt_marks' => $row[$i],
+                    'student_detail_id' => $stud['id'],
+                    'ct_no' => 1
+                ];
+                array_push($records, $record);
+                $u = new \ClassTestDetail($record);
+                $u->save();
+            } catch(Exception $err) {
+                array_push($el, [
+                    'row' => $row,
+                    'error' => $err
+                ]);
+            }
         }
-        $c['subjects'] = $subs;
-        array_push($r, $c);
+
+        // $c['subjects'] = $subs;
+        // array_push($r, $c);
     }
 
-    return $response->withJson($r);
+    return $response->withJson([
+            'records' => $records,
+            'errors' => $el
+        ]);
 });
 
 
@@ -561,4 +587,66 @@ function moveUploadedFile($directory, $filename, UploadedFile $uploadedFile)
     return $filename;
 }
 
-?>
+function insertMarks($filename, $total_marks, $passing_marks) {
+    $xls = PHPExcel_IOFactory::load(ROOT . '/uploads/results/' . $filename);
+    $sheet = $xls->getActiveSheet();
+    $maxCell = $sheet->getHighestRowAndColumn();
+    $res = $sheet->rangeToArray('A1:' . $maxCell['column'] . $maxCell['row']);
+    $header = $res[0];
+    $header[0] = 'roll_no';
+    $header = array_map(function ($item) {
+        return strtolower($item);
+    }, $header);
+
+    $marklist = array_slice($res, 1, $maxCell['row']);
+
+    $r = array();
+    // $records = [];
+    $success_count = 0;
+    $el = array();
+    foreach ($marklist as $row) {
+        $c = array(
+            'roll_no' => $row[0]
+        );
+        $subs = array();
+        for ($i=1; $i < count($row) && $header[$i] != null; $i++) {
+            // array_push($subs, array(
+            //     'subject_name' => $header[$i],
+            //     'obt_marks' => $row[$i]
+            // ));
+
+            try {
+                $stud = StudentDetail::where('roll_no', $row[0])->first();
+                $sub = SubjectDetail::where('short_name', $header[$i])->first();
+                $record = [
+                    'subject_detail_id' => $sub['id'],
+                    'total_marks' => $total_marks,
+                    'passing' => $passing_marks,
+                    'obt_marks' => $row[$i],
+                    'student_detail_id' => $stud['id'],
+                    'ct_no' => 1
+                ];
+                // array_push($records, $record);
+                $u = new \ClassTestDetail($record);
+                $u->save();
+                $success_count += 1;
+            } catch(Exception $err) {
+                array_push($el, [
+                    'row' => $row,
+                    'error' => $err
+                ]);
+            }
+        }
+
+        // $c['subjects'] = $subs;
+        // array_push($r, $c);
+    }
+
+    // error_log(json_encode($el));
+
+    return [
+        'inserted' => $success_count,
+        'failed' => count($marklist) - $success_count,
+        'errors' => $el
+    ];
+}

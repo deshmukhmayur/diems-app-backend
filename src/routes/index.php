@@ -28,6 +28,8 @@ require '../models/ClassTeacherMapping.php';
 require '../models/MentorBatchMapping.php';
 // Include Subject Teacher Mapping model
 require '../models/SubjectTeacherMapping.php';
+// Include Feedback Model
+require '../models/Feedback.php';
 
 // setting up CORS
 $app->options('/{routes:.+}', function ($request, $response, $args) {
@@ -45,7 +47,7 @@ $app->add(function ($req, $res, $next) {
 // API v0.2 (support for older versions of the app)
 $app->group('', function() {
     // routes for NOTICES
-    require '../src/routes/notices.php';
+    require 'notices.php';
     
     $this->any('/{route:login|register|changepass}', function($request, $response, $args) {
         return $response->withStatus(426)->withJson(array('status'=>426,
@@ -55,11 +57,14 @@ $app->group('', function() {
 
 $app->group('/api', function() {
     // routes for AUTHENTICATION module
-    require '../src/routes/auth.php';
+    require 'auth.php';
     // routes for NOTICES module
-    require '../src/routes/notices.php';
+    require 'notices.php';
     // routes for CLASS TEST module
-    require '../src/routes/class_test.php';
+    require 'class_test.php';
+
+    // routes for ADMIN Operations
+    require 'admin_operations.php';
 });
 
 ?>

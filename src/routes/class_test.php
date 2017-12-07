@@ -82,20 +82,31 @@ $this->group('/staff', function () {
             
             $staff['department'] = strtoupper($staff->dept->name);
             
-            // check if $staff if class teacher
+            // check if $staff is class teacher
             $class = \ClassTeacherMapping::where('staff_detail_id', $staff_id)->first();
             if ($class) {
                 $my_class = \ClassMapping::find($class['class_mapping_id']);
-                $staff['class'] = strtoupper($my_class->class);
-                $staff['division'] = $my_class->division;
+            }
+
+            // Fetch all the subjects taught by the $staff
+            $subjects = [];
+            $subMapping = $staff->subjectMapping;
+            foreach ($subMapping as $sub) {
+                array_push($subjects, [
+                    'name' => ucwords($sub->subject->name),
+                    'class' => strtoupper($sub->class->class . ' ' . $sub->class->division)
+                ]);
             }
 
             // return $response->withJson($staff);
             return $response->withJson(array(
+                'status' => 200,
                 'name' => ucwords($staff->name),
                 'mob_no' => $staff->mob_no,
                 'email' => $staff->email,
-                'department' => $staff->department
+                'department' => $staff->department,
+                'class' => strtoupper($my_class->getClassName()),
+                'subjects' => $subjects
             ));
         }
 
@@ -574,8 +585,7 @@ $this->get('/test', function ($request, $response) {
 
 
 
-function moveUploadedFile($directory, $filename, UploadedFile $uploadedFile)
-{
+function moveUploadedFile($directory, $filename, UploadedFile $uploadedFile) {
     // error_log($directory);
     $extension = pathinfo($uploadedFile->getClientFilename(), PATHINFO_EXTENSION);
     // $basename = $filename . '_' . bin2hex(random_bytes(8)); // see http://php.net/manual/en/function.random-bytes.php

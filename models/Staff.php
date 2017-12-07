@@ -20,6 +20,10 @@ class StaffDetail extends \Illuminate\Database\Eloquent\Model {
     public function mentees() {
         return $this->hasOne('\MentorBatchMapping');
     }
+
+    public function subjectMapping() {
+        return $this->hasMany('\SubjectTeacherMapping');
+    }
 }
 
 ?>

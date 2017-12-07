@@ -67,14 +67,14 @@ $this->post('/register', function ($request, $response) {
                                         ->first();
                 // Creating a new student user
                 $new_user = new \StudentDetail(array(
-                'name' => $data['name'],
-                'prn_no' => $data['prn_no'],
-                'roll_no' => $data['roll_no'],
-                'mentor_batch_mapping_id' => $batch['id'],
-                'dob' => $data['dob'],
-                'mob_no' => $data['mob_no'],
-                'email' => $data['email'],
-                'password' => hash('sha256', $data['password'])
+                    'name' => $data['name'],
+                    'prn_no' => $data['prn_no'],
+                    'roll_no' => $data['roll_no'],
+                    'mentor_batch_mapping_id' => $batch['id'],
+                    'dob' => $data['dob'],
+                    'mob_no' => $data['mob_no'],
+                    'email' => $data['email'],
+                    'password' => hash('sha256', $data['password'])
                 ));
                 $class->students()->save($new_user);
             } else {
@@ -83,9 +83,9 @@ $this->post('/register', function ($request, $response) {
             }
             // Creating an access token
             $token = new \AccessToken(array(
-            'token' => md5($data['email'] . $data['password']),
-            'u_id' => $new_user->id,
-            'u_type' => $user_type
+                'token' => md5($data['email'] . $data['password']),
+                'u_id' => $new_user->id,
+                'u_type' => $user_type
             ));
             $token->save();
 
@@ -173,6 +173,11 @@ $this->put('/changepass', function ($request, $response) {
         $new_pass = $data['new_pass'];
         // echo $old_pass .'<br>'. $new_pass;
 
+        if ($old_pass == $new_pass) {
+            return $response->withJson(array('status' => 304,
+                                            'message' => 'Password not changed.'));
+        }
+
         if (hash('sha256', $old_pass) == $user['password']) {
             // updating the password and token
             $user->update([
@@ -189,7 +194,7 @@ $this->put('/changepass', function ($request, $response) {
                                             'access_token' => $token['token']));
         } else {
             return $response->withJson(array('status'=>412,
-                                            'error'=>'Incorrect Password'));
+                                            'error'=>'The entered password is incorrect'));
         }
     } else {
         return $response->withJson(array('status'=>401,

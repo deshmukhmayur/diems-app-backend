@@ -17,6 +17,9 @@ class ClassMapping extends \Illuminate\Database\Eloquent\Model {
         return $this->belongsTo('\DepartmentDetail', 'department_detail_id');
     }
 
+    public function getClassName() {
+        return $this->class . ' ' . $this->division;
+    }
     // public function staffMapping() {
     //     return $this->belongsTo('\ClassTeacherMapping');
     // }
